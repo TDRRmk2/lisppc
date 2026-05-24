@@ -1,0 +1,3 @@
+add r1, r1, r2 
+mullw r1, r3, r4 
+li r1, 291

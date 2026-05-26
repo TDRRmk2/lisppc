@@ -2,8 +2,33 @@
 
 (defvar outStream (make-string-output-stream))
 
+(make-symbol "reg")
+(make-symbol "imm")
+
+(defun get-dirc-from-char (c)
+  (case c
+    (reg "A")
+    (imm "D")))
+
+(defun make-ins-fmt-args (argc)
+  (let ((str "~{"))
+  (loop for i from 1 to argc
+	do (setf str (if (= i argc)
+			 (concatenate 'string str "~(~A~) ")
+			 (concatenate 'string str "~(~A~), "))))
+    (concatenate 'string str "~}~%")))
+
+(defmacro def-ins (ins argc)
+  (list ins (list 'format 'out
+		   (format nil "~A ~A"
+			   ins (list (make-ins-fmt-args argc)) ) (list 'cdr 'form))) )
+
 (defun emit-instruction (form out)
   (case (car form)
+    (def-ins add 3)
+    (def-ins sub 3)
+    (def-ins mullw 3)
+    (def-ins divw 3)
     (+ (format out "add ~{~(~A~), ~(~A~), ~(~A~) ~}~%" (cdr form)))
     (- (format out "subf ~{~(~A~), ~(~A~), ~(~A~) ~}~%" (cdr form)))
     (* (format out "mullw ~{~(~A~), ~(~A~), ~(~A~) ~}~%" (cdr form)))

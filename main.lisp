@@ -1,34 +1,38 @@
-(require "uiop")
+(cl:defpackage "lisppc"
+  (:use "uiop"))
+
+(cl:in-package "lisppc")
 
 (defvar outStream (make-string-output-stream))
 
 (make-symbol "reg")
 (make-symbol "imm")
 
-(defun get-dirc-from-char (c)
+(defun get-dirc-from-sym (c)
   (case c
     (reg "A")
     (imm "D")))
 
-(defun make-ins-fmt-args (argc)
+(defun make-ins-fmt-args (args)
   (let ((str "~{"))
-  (loop for i from 1 to argc
-	do (setf str (if (= i argc)
-			 (concatenate 'string str "~(~A~) ")
-			 (concatenate 'string str "~(~A~), "))))
+  (loop for i from 0 to (- (length args) 1)
+	do (setf str (if (eq i args)
+			 (format nil "~A~~(~~~A~~) " str (get-dirc-from-sym (elt args i)))
+			 (format nil "~A~~(~~~A~~), " str (get-dirc-from-sym (elt args i))))))
     (concatenate 'string str "~}~%")))
 
-(defmacro def-ins (ins argc)
+(defmacro def-ins (ins args)
   (list ins (list 'format 'out
 		   (format nil "~A ~A"
-			   ins (list (make-ins-fmt-args argc)) ) (list 'cdr 'form))) )
+			   ins (make-ins-fmt-args args) ) (list 'cdr 'form))) )
 
 (defun emit-instruction (form out)
   (case (car form)
-    (def-ins add 3)
-    (def-ins sub 3)
-    (def-ins mullw 3)
-    (def-ins divw 3)
+    (def-ins add (reg reg reg))
+    (def-ins sub (reg reg reg))
+    (def-ins mullw (reg reg reg))
+    (def-ins divw (reg reg reg))
+    (def-ins li (reg imm))
     (+ (format out "add ~{~(~A~), ~(~A~), ~(~A~) ~}~%" (cdr form)))
     (- (format out "subf ~{~(~A~), ~(~A~), ~(~A~) ~}~%" (cdr form)))
     (* (format out "mullw ~{~(~A~), ~(~A~), ~(~A~) ~}~%" (cdr form)))
